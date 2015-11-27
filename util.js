@@ -240,5 +240,109 @@
 
 	// 实现一个简单的Query
 	function $(selector) {
-		
+					return $.fn.init(selector);
+				}
+			$.fn=$.prototype;
+			$.fn.init=function(selector){
+				var ele,
+					 selector_array,
+					 length;
+				function get_element(selector,context){
+					context=context||document;
+					var symbol=selector.slice(0,1),
+						 last_symbol=selector.charAt(selector.length-1);
+					if(symbol=='#'){
+						return context.getElementById(selector.substring(1));
+					}else if(symbol=='.'){
+						var aaa;
+						if(document.getElementsByClassName) aaa=context.getElementsByClassName(selector.substring(1));
+						else {
+							var all_ele=context.getElementsByTagName('*'),
+								 testClass = new RegExp("(^|\s)" + obj + "(\s|$)"),
+								 ele_array=[];
+								
+							for(var i=0;i<all_ele.length;i++){
+								if(testClass.test(all_ele[i].className)){
+									ele_array.push(all_ele[i]);
+								}
+							}
+							aaa=ele_array;
+						}
+						return aaa[0];
+					}else if(symbol=='['&&last_symbol==']'){
+						var data_name=selector.slice(1,-1).split('='),
+							 all_ele=context.getElementsByTagName('*'),
+							 ele_array=[];
+						for(var i=0;i<all_ele.length;i++){
+							if(all_ele[i].attributes[data_name[0]]){
+								if(data_name.length==1)
+									ele_array.push(all_ele[i]);
+								else if(all_ele[i].attributes[data_name[0]].nodeValue==data_name[1])
+									ele_array.push(all_ele[i]);
+							}
+						}
+						return ele_array[0];
+					}else{
+						return context.getElementsByTagName(selector)[0];
+					}
+				};
+				if(!selector){
+					return this;
+				}
+				if(typeof selector =='string'){
+					selector_array=selector.split(' ');
+					length=selector_array.length;
+					if((selector.slice(0,1)=='#'||selector.slice(0,1)=='.')&&length>1){
+						var context_element=document;
+						for(var i=0;i<length;i++){
+							context_element=get_element(selector_array[i],context_element);
+						}
+						ele=context_element;
+						return ele;
+					}else
+						return get_element(selector);
+				}
+			};
+	// console.log($('#divbox'));
+	// console.log($('div'));
+	// console.log($('.mydiv1'));
+	// console.log($('#divbox .mydiv2'));
+	//console.log($('[data-null]'));
+	//console.log($('[data-time=2015]'));
+
+	// 给一个element绑定一个针对event事件的响应，响应函数为listener
+	function addEvent(element,event,listener){
+		if(window.addEventListener){
+			element.addEventListener(event, listener,false);
+		}else if(window.attachEvent){
+			element.attachEvent('on'+event,listener);
+		}else{
+			element['on'+event]=listener;
+		}
 	}
+	// 移除element对象对于event事件发生时执行listener的响应
+	function removeEvent(element,event,listener){
+		if(window.removeEventListener){
+			element.removeEventListener(event,listener,false);
+		}else if(window.detachEvent){
+			element.detachEvent('on'+event,listener);
+		}else{
+			element['on'+event]=null;
+		}
+	}
+	//实现click事件的绑定
+	function addClickEvent(element,listener){
+		addEvent(element,'click',listener);
+	}
+	// 实现对于按Enter键时的事件绑定
+	function addEnterEvent(element,listener){
+		addEvent(element,'keydown',function(event){
+			event=event||window.event;
+			if((event.keyCode||event.which)==13){
+				listener();
+			}
+		});
+	}
+
+
+	
