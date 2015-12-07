@@ -157,7 +157,8 @@
 
 	//获取一个对象里面第一层元素的数量，返回一个整数
 	function getObjectLength(obj){
-		var length=0,key;
+		var length=0,
+			 key;
 		for(key in obj){
 			if(obj.hasOwnProperty(key))
 				length++;
@@ -191,7 +192,7 @@
 	function addClass(element, newClassName) {
 		var ClassNames=element.className;
 		var classArray=ClassNames.split(' ');
-		if(index=classArray.indexOf(oldClassName)<0){
+		if(classArray.indexOf(newClassName)<0){
 			element.className+=' 'newClassName;
 		}else{
 			return false;
@@ -239,11 +240,12 @@
 
 
 	// 实现一个简单的Query
-	function $(selector) {
-					return $.fn.init(selector);
-				}
-			$.fn=$.prototype;
-			$.fn.init=function(selector){
+	(function(window,document){
+		function $(selector) {
+			return new $.fn.init(selector);
+		}
+		$.fn=$.prototype={
+			init:function(selector){
 				var ele,
 					 selector_array,
 					 length;
@@ -288,8 +290,7 @@
 				};
 				if(!selector){
 					return this;
-				}
-				if(typeof selector =='string'){
+				}else if(typeof selector =='string'){
 					selector_array=selector.split(' ');
 					length=selector_array.length;
 					if((selector.slice(0,1)=='#'||selector.slice(0,1)=='.')&&length>1){
@@ -298,51 +299,101 @@
 							context_element=get_element(selector_array[i],context_element);
 						}
 						ele=context_element;
+						// this.length=1;
+						// this[0]=ele;
 						return ele;
 					}else
+						// this.length=1;
+						// this[0]= get_element(selector);
 						return get_element(selector);
 				}
-			};
-	// console.log($('#divbox'));
-	// console.log($('div'));
-	// console.log($('.mydiv1'));
-	// console.log($('#divbox .mydiv2'));
-	//console.log($('[data-null]'));
-	//console.log($('[data-time=2015]'));
+			},
+		}
+		$.fn.init.prototype=$.fn;
+		// console.log($('#divbox'));
+		// console.log($('div'));
+		// console.log($('.mydiv1'));
+		// console.log($('#divbox .mydiv2'));
+		//console.log($('[data-null]'));
+		//console.log($('[data-time=2015]'));
 
-	// 给一个element绑定一个针对event事件的响应，响应函数为listener
-	function addEvent(element,event,listener){
-		if(window.addEventListener){
-			element.addEventListener(event, listener,false);
-		}else if(window.attachEvent){
-			element.attachEvent('on'+event,listener);
-		}else{
-			element['on'+event]=listener;
-		}
-	}
-	// 移除element对象对于event事件发生时执行listener的响应
-	function removeEvent(element,event,listener){
-		if(window.removeEventListener){
-			element.removeEventListener(event,listener,false);
-		}else if(window.detachEvent){
-			element.detachEvent('on'+event,listener);
-		}else{
-			element['on'+event]=null;
-		}
-	}
-	//实现click事件的绑定
-	function addClickEvent(element,listener){
-		addEvent(element,'click',listener);
-	}
-	// 实现对于按Enter键时的事件绑定
-	function addEnterEvent(element,listener){
-		addEvent(element,'keydown',function(event){
-			event=event||window.event;
-			if((event.keyCode||event.which)==13){
-				listener();
+
+		//解析传进来的节点
+		$.analysis=function(element){
+			if(typeof element==='string'){
+				return $(element);
+			}else{
+				return element; 
 			}
-		});
-	}
+		}
+		// 给一个element绑定一个针对event事件的响应，响应函数为listener
+		$.on=function(element,event,listener){
+			element=this.analysis(element);
+			if(window.addEventListener){
+				element.addEventListener(event, listener,false);
+			}else if(window.attachEvent){
+				element.attachEvent('on'+event,listener);
+			}else{
+				element['on'+event]=listener;
+			}
+		}
+		// 移除element对象对于event事件发生时执行listener的响应
+		$.un=function(element,event,listener){
+			element=this.analysis(element);
+			if(window.removeEventListener){
+				element.removeEventListener(event,listener,false);
+			}else if(window.detachEvent){
+				element.detachEvent('on'+event,listener);
+			}else{
+				element['on'+event]=null;
+			}
+		}
+		//实现click事件的绑定
+		$.click=function (element,listener){
+			this.on(element,'click',listener);
+		}
+		// 实现对于按Enter键时的事件绑定
+		$.enter=function (element,listener){
+			this.on(element,'keydown',function(event){
+				event=event||window.event;
+				if((event.keyCode||event.which)==13){
+					listener();
+				}
+			});
+		}
+		//实现事件的代理
+		$.delegateEvent=function(element,tag,event,listener){
+			element=this.analysis(element);
+			function depute(event){
+				event=event||window.event;
+				var target=event.target||event.srcElement;
+				if(target.nodeName.toLowerCase()==tag){
+					var e=event;
+					listener.call(target,e);
+				}
+			}
+			if(!tag){
+				tag=element.nodeName.toLowerCase();
+			}
+			if(window.addEventListener){
+				element.addEventListener(event,function(e){
+					depute(e);
+				},false);
+			}else if(window.attachEvent){
+				element.attachEvent(event,function(e){
+					depute(e);
+				});
+			}else{
+				element['on'+event]=function(e){
+					depute(e);
+				}
+			}
+		}
+		window.$=$;
+	})(window,document);
+	// $.on($('#divbox'),'click',function(){
+	// 	$('#divbox')[0].style.backgroundColor='#fff';
+	// });
 
 
 	
