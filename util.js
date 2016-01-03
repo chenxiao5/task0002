@@ -204,7 +204,7 @@
 	function removeClass(element, oldClassName) {
 	    var index,ClassNames=element.className;
 	    var classArray=ClassNames.split(' ');
-	    if(index=classArray.indexOf(oldClassName)<0){
+	    if((index=classArray.indexOf(oldClassName))<0){
 		 return false;
 	    }else{
 	    	classArray.splice(index,1);
@@ -356,7 +356,7 @@
 		$.enter=function (element,listener){
 			this.on(element,'keydown',function(event){
 				event=event||window.event;
-				if((event.keyCode||event.which)==13){
+				if((event.charCode||event.keyCode)==13){
 					listener();
 				}
 			});
@@ -396,4 +396,101 @@
 	// });
 
 
-	
+	// 判断是否为ie浏览器
+		//简单方法
+	function isIE1(){
+		return ('ActiveXObject' in window);
+	}
+		//判断版本号
+	function isIE2(){
+		var browser={},userAgent=navigator.userAgent.toLowerCase();
+		var uaMatch=userAgetn.match(/msie ([\d.]+)/);
+		if(uaMatch == null) return -1;
+		return ('ie:'+uaMatch[1]);
+	}
+
+	// cookie操作
+		// 设置cookie(设置成功返回true，失败返回false)
+	function setCookie(cookieName,cookieValue,expiredays){
+		var date=new Date(),
+			 str=cookieName+'='+escape(cookieValue);
+		expiredays=expiredays||0;
+		if(!(cookieName&&cookieValue&&cookieName!='')) return false;
+		if(expiredays !=0){
+			date.setTime(date.getTime() + (expiredays*24*3600*1000));
+			str +='; expires='+date.toUTCString()+';';
+		}
+		document.cookie = str;
+		return true;
+	}
+		//获取cookie(当cookieValue值为空时，默认读取所有cookie值，返回值为结果数组)
+	function getCookie(cookieName){
+		var result={}	,
+			 arr,
+			 reg=new RegExp('(^| )'+cookieName+'=([^;]*)(;|$)');
+		if(cookieName){
+			if(arr=document.cookie.match(reg))
+				result[cookieName]=arr[2];
+			else
+				return null;
+		}else{
+			arr=document.cookie.split('; ');
+			for(var i=0,j=arr.length;i<j;i++){
+				var item=arr[i].split('=');
+				result[item[0]]=item[1];
+			}
+		}
+		return result;
+	}
+		//清除cookie(cookieValue不存在时：返回false，存在时：修改cookie有效期并返回true)
+	function clearCookie(cookieName){
+		var date=new Date();
+	     		 date.setTime(date.getTime() - 10000); 
+		if(!cookieName) return false;
+		document.cookie = cookieName+'= ;expires='+date.toUTCString();
+		return true;
+	}
+
+	// console.log(setCookie('mcookie','value',1));
+	// console.log(getCookie());
+	// console.log(clearCookie('mcookie'));
+	// console.log(getCookie());
+
+	//ajax函数(options参数如下：data(数据),Type(请求方式),onbeforeSend(发送请求前执行回调),onsuccess(发送请求成功执行回调),onfail(请求失败执行回调))
+	function ajax(url,options){
+		var request=new XMLHttpRequest(),
+			 callback=function(){},
+			 normOptions={
+			 	data:options.data||{},
+			 	Type:options.Type||'GET',
+			 	onbeforeSend:options.onbeforeSend||callback,
+			 	onsuccess:options.onsuccess||callback,
+			 	onfail:options.onfail||callback
+			 },
+			 data;
+		console.log(normOptions.Type);
+		url=url||'http://localhost/';
+		request.open(normOptions.Type,url);
+		request.setRequestHeader("Content-type","application/x-www-form-urlencoded");
+		if(normOptions.Type==='POST'){
+			var str='';
+			for(var i in normOptions.data){
+				str+=(i+'='+normOptions.data[i]+'&');
+			}
+			request.send(str.slice(0,-1));
+		}
+			
+		else
+			request.send();
+		request.onreadystatechange=function(){
+			if(request.readyState===0) normOptions.beforeSend();
+			if(request.readyState===4){
+				if(request.status===200){
+					data=request.responseText;
+					normOptions.onsuccess(data,request);
+				}else{
+					normOptions.onfail(normOptions.status,request);
+				}
+			}
+		}
+	}
