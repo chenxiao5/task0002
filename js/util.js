@@ -193,7 +193,7 @@
 		var ClassNames=element.className;
 		var classArray=ClassNames.split(' ');
 		if(classArray.indexOf(newClassName)<0){
-			element.className+=' 'newClassName;
+			element.className+=' '+newClassName;
 		}else{
 			return false;
 		}
@@ -250,14 +250,17 @@
 					 selector_array,
 					 length;
 				function get_element(selector,context){
-					context=context||document;
 					var symbol=selector.slice(0,1),
 						 last_symbol=selector.charAt(selector.length-1);
+					context=context||document;
+					if(Object.prototype.toString.call(context) === '[object Array]'||Object.prototype.toString.call(context) === '[object HTMLCollection]')
+						context=context[0];
 					if(symbol=='#'){
-						return context.getElementById(selector.substring(1));
+						return document.getElementById(selector.substring(1));
 					}else if(symbol=='.'){
 						var aaa;
-						if(document.getElementsByClassName) aaa=context.getElementsByClassName(selector.substring(1));
+						if(document.getElementsByClassName)
+							aaa=context.getElementsByClassName(selector.substring(1));
 						else {
 							var all_ele=context.getElementsByTagName('*'),
 								 testClass = new RegExp("(^|\s)" + obj + "(\s|$)"),
@@ -270,7 +273,7 @@
 							}
 							aaa=ele_array;
 						}
-						return aaa[0];
+						return aaa;
 					}else if(symbol=='['&&last_symbol==']'){
 						var data_name=selector.slice(1,-1).split('='),
 							 all_ele=context.getElementsByTagName('*'),
@@ -283,9 +286,9 @@
 									ele_array.push(all_ele[i]);
 							}
 						}
-						return ele_array[0];
+						return ele_array;
 					}else{
-						return context.getElementsByTagName(selector)[0];
+						return context.getElementsByTagName(selector);
 					}
 				};
 				if(!selector){
@@ -293,18 +296,14 @@
 				}else if(typeof selector =='string'){
 					selector_array=selector.split(' ');
 					length=selector_array.length;
-					if((selector.slice(0,1)=='#'||selector.slice(0,1)=='.')&&length>1){
+					if(length>1){
 						var context_element=document;
 						for(var i=0;i<length;i++){
 							context_element=get_element(selector_array[i],context_element);
 						}
 						ele=context_element;
-						// this.length=1;
-						// this[0]=ele;
 						return ele;
 					}else
-						// this.length=1;
-						// this[0]= get_element(selector);
 						return get_element(selector);
 				}
 			},
